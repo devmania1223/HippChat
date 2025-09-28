@@ -211,7 +211,7 @@ export default function ChatScreen() {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <View style={styles.contactInfo}>
           {contact.avatarUrl ? (
@@ -223,10 +223,18 @@ export default function ChatScreen() {
               </Text>
             </View>
           )}
-          <View>
+          <View style={styles.contactDetails}>
             <Text style={styles.contactName}>{contact.displayName}</Text>
-            <Text style={styles.contactStatus}>Online</Text>
+            <View style={styles.statusContainer}>
+              <View style={styles.statusIndicator} />
+              <Text style={styles.contactStatus}>Online</Text>
+            </View>
           </View>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.actionButton}>
+            <Text style={styles.actionButtonText}>⋯</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -269,35 +277,49 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8fafc',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#ffffff',
   },
   errorText: {
     fontSize: 18,
-    color: '#666',
+    color: '#6b7280',
     marginBottom: 20,
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: '#fff',
+    paddingBottom: 20,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 16,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
+    fontSize: 20,
+    color: '#3167dd',
+    fontWeight: '600',
   },
   contactInfo: {
     flexDirection: 'row',
@@ -305,42 +327,73 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     marginRight: 12,
   },
   headerAvatarPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#007AFF',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#3167dd',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   headerAvatarText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  contactDetails: {
+    flex: 1,
   },
   contactName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#1a1a1a',
+    marginBottom: 2,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10b981',
+    marginRight: 6,
   },
   contactStatus: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#6b7280',
+  },
+  headerActions: {
+    marginLeft: 12,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    fontSize: 18,
+    color: '#6b7280',
+    fontWeight: '600',
   },
   messagesList: {
     flex: 1,
   },
   messagesContainer: {
-    padding: 16,
+    padding: 20,
   },
   messageContainer: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   ownMessage: {
     alignItems: 'flex-end',
@@ -349,78 +402,89 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '80%',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
+    maxWidth: '85%',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: 24,
   },
   ownBubble: {
-    backgroundColor: '#007AFF',
-    borderBottomRightRadius: 4,
+    backgroundColor: '#3167dd',
+    borderBottomRightRadius: 6,
   },
   otherBubble: {
-    backgroundColor: '#fff',
-    borderBottomLeftRadius: 4,
+    backgroundColor: '#ffffff',
+    borderBottomLeftRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   messageText: {
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   ownMessageText: {
-    color: '#fff',
+    color: '#ffffff',
   },
   otherMessageText: {
-    color: '#333',
+    color: '#1a1a1a',
   },
   messageTime: {
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 6,
   },
   ownMessageTime: {
     color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'right',
   },
   otherMessageTime: {
-    color: '#999',
+    color: '#9ca3af',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#e5e7eb',
   },
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderColor: '#e5e7eb',
+    borderRadius: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     marginRight: 12,
-    maxHeight: 100,
+    maxHeight: 120,
     fontSize: 16,
+    backgroundColor: '#f8fafc',
+    color: '#1a1a1a',
   },
   sendButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-    minWidth: 60,
+    backgroundColor: '#3167dd',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 24,
+    minWidth: 70,
     alignItems: 'center',
+    shadowColor: '#3167dd',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sendButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#9ca3af',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   sendButtonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },

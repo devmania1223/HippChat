@@ -1,11 +1,11 @@
 import React from 'react';
 import {
-  Dimensions,
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
 interface MessageBoxProps {
@@ -74,60 +74,67 @@ export default function MessageBox({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    width: Math.min(width - 40, 320),
-    maxWidth: 320,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    width: Math.min(width - 40, 340),
+    maxWidth: 340,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 8,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   header: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingTop: 24,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1a1a1a',
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   body: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
   },
   message: {
     fontSize: 16,
-    color: '#666',
+    color: '#6b7280',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
   },
   footer: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: '#e5e7eb',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    overflow: 'hidden',
   },
   button: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButton: {
     borderRightWidth: 1,
-    borderRightColor: '#E5E5EA',
+    borderRightColor: '#e5e7eb',
+    backgroundColor: '#f8fafc',
   },
   confirmButton: {
     // No border for the last button
@@ -135,11 +142,11 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: '#6b7280',
   },
   confirmButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: '#ffffff',
   },
 });

@@ -74,8 +74,14 @@ export default function LoginScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logo}>💬</Text>
+        </View>
         <Text style={styles.title}>HippChat</Text>
         <Text style={styles.subtitle}>Secure 1:1 Encrypted Chat</Text>
+        <View style={styles.securityBadge}>
+          <Text style={styles.securityText}>🔐 End-to-End Encrypted</Text>
+        </View>
       </View>
 
       {error && (
@@ -88,29 +94,40 @@ export default function LoginScreen() {
       )}
 
       <View style={styles.testUsersContainer}>
-        <Text style={styles.label}>Choose a test user to start chatting:</Text>
-        {testUsers.map((user) => (
-          <TouchableOpacity
-            key={user.ss58Address}
-            style={[
-              styles.testUserButton,
-              isLoading && styles.testUserButtonDisabled
-            ]}
-            onPress={() => handleTestUserLogin(user)}
-            disabled={isLoading}
-          >
-            <View style={styles.testUserInfo}>
-              <Text style={styles.testUserName}>{user.displayName}</Text>
-              <Text style={styles.testUserAddress}>{user.ss58Address.slice(0, 8)}...</Text>
-              {user.about && (
-                <Text style={styles.testUserAbout}>{user.about}</Text>
+        <Text style={styles.label}>Choose a test user to start chatting</Text>
+        <View style={styles.usersGrid}>
+          {testUsers.map((user) => (
+            <TouchableOpacity
+              key={user.ss58Address}
+              style={[
+                styles.testUserButton,
+                isLoading && styles.testUserButtonDisabled
+              ]}
+              onPress={() => handleTestUserLogin(user)}
+              disabled={isLoading}
+            >
+              <View style={styles.userAvatar}>
+                <Text style={styles.userAvatarText}>
+                  {user.displayName.charAt(0)}
+                </Text>
+              </View>
+              <View style={styles.testUserInfo}>
+                <Text style={styles.testUserName}>{user.displayName}</Text>
+                <Text style={styles.testUserAddress}>{user.ss58Address.slice(0, 8)}...</Text>
+                {user.about && (
+                  <Text style={styles.testUserAbout} numberOfLines={2}>
+                    {user.about}
+                  </Text>
+                )}
+              </View>
+              {isLoading && (
+                <View style={styles.loadingIndicator}>
+                  <ActivityIndicator color="#3167dd" size="small" />
+                </View>
               )}
-            </View>
-            {isLoading && (
-              <ActivityIndicator color="#007AFF" size="small" />
-            )}
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
     </ScrollView>
   );
@@ -119,72 +136,133 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ffffff',
   },
   content: {
     flexGrow: 1,
-    padding: 20,
+    padding: 24,
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 48,
+  },
+  logoContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#e3f2fd',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#3167dd',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logo: {
+    fontSize: 32,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 36,
+    fontWeight: '700',
+    color: '#1a1a1a',
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 18,
+    color: '#6b7280',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  securityBadge: {
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#3167dd',
+  },
+  securityText: {
+    fontSize: 14,
+    color: '#3167dd',
+    fontWeight: '600',
   },
   testUsersContainer: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
+    color: '#1a1a1a',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  usersGrid: {
+    gap: 12,
   },
   testUserButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 8,
+    borderColor: '#e5e7eb',
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   testUserButtonDisabled: {
     opacity: 0.6,
+  },
+  userAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#3167dd',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  userAvatarText: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '600',
   },
   testUserInfo: {
     flex: 1,
   },
   testUserName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#1a1a1a',
     marginBottom: 4,
   },
   testUserAddress: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#6b7280',
     fontFamily: 'monospace',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   testUserAbout: {
     fontSize: 14,
-    color: '#666',
+    color: '#6b7280',
+    lineHeight: 20,
+  },
+  loadingIndicator: {
+    marginLeft: 12,
   },
   errorContainer: {
-    backgroundColor: '#FFE6E6',
-    borderColor: '#FF3B30',
+    backgroundColor: '#fef2f2',
+    borderColor: '#ef4444',
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     marginHorizontal: 20,
     marginBottom: 20,
     flexDirection: 'row',
@@ -192,22 +270,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   errorText: {
-    color: '#FF3B30',
+    color: '#ef4444',
     fontSize: 14,
     flex: 1,
     marginRight: 8,
+    fontWeight: '500',
   },
   errorCloseButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FF3B30',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ef4444',
     alignItems: 'center',
     justifyContent: 'center',
   },
   errorCloseText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });
