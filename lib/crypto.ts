@@ -178,3 +178,33 @@ export function verifySignature(message: Uint8Array, signature: string, publicKe
   const sigBytes = naclUtil.decodeBase64(signature);
   return nacl.sign.detached.verify(message, sigBytes, publicKey);
 }
+
+/**
+ * Get SS58 address and public key from seed using API
+ */
+export async function getAddressFromSeed(seed: string): Promise<{ ss58_address: string; public_key: string }> {
+  try {
+    const response = await fetch('http://172.86.122.52:8000/get_address', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ seed }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.ss58_address || !data.public_key) {
+      throw new Error('Invalid response from API');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Failed to get address from seed:', error);
+    throw new Error(`Failed to get address from seed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
