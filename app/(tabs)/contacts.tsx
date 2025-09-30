@@ -5,13 +5,13 @@ import { getTestUsers } from '@/lib/test-users';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    FlatList,
-    Image,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 export default function ContactsScreen() {
@@ -31,10 +31,10 @@ export default function ContactsScreen() {
 
   // Initialize contacts with test users
   useEffect(() => {
-    const initializeContacts = () => {
+    const initializeContacts = async () => {
       if (contacts.length === 0) {
         try {
-          const testUsers = getTestUsers();
+          const testUsers = await getTestUsers();
           testUsers.forEach(user => {
             if (user.ss58Address !== currentUser?.ss58Address) {
               addContact({

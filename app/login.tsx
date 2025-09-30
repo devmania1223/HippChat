@@ -30,14 +30,17 @@ export default function LoginScreen() {
 
   // Load test users on component mount
   React.useEffect(() => {
-    const users = getTestUsers();
-    setTestUsers(users);
+    const loadTestUsers = async () => {
+      const users = await getTestUsers();
+      setTestUsers(users);
+    };
+    loadTestUsers();
   }, []);
 
   const handleTestUserLogin = async (testUser: any) => {
     setIsLoading(true);
     try {
-      const keyPair = deriveKeysFromSeed(testUser.seed, testUser.ss58Address);
+      const keyPair = await deriveKeysFromSeed(testUser.seed);
       const credentials = hippiusCredentialsFromKeyPair(keyPair);
 
       const s3Client = makeS3Client({
@@ -86,7 +89,7 @@ export default function LoginScreen() {
       const { ss58_address, public_key } = await mnemonicToSs58(seedPhrase.trim());
 
       // Derive keypair using the API response
-      const keyPair = deriveKeysFromSeed(seedPhrase.trim(), ss58_address);
+      const keyPair = await deriveKeysFromSeed(seedPhrase.trim());
       const credentials = hippiusCredentialsFromKeyPair(keyPair);
 
       const s3Client = makeS3Client({

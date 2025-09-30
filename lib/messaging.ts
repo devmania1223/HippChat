@@ -302,7 +302,7 @@ export class MessagingService {
           }
         } catch {}
       }
-      console.log('[hasRecentIncoming]', { contactAddress, lookbackMs, found });
+      // console.log('[hasRecentIncoming]', { contactAddress, lookbackMs, found });
       return found;
     } catch (e) {
       console.error('[hasRecentIncoming] failed:', e);
