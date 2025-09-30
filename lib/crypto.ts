@@ -1,5 +1,12 @@
 
 // Production-ready encryption implementation using tweetnacl
+import { blake2b } from '@noble/hashes/blake2.js';
+import { pbkdf2 } from '@noble/hashes/pbkdf2.js';
+import { sha512 } from '@noble/hashes/sha2.js';
+import { hexToBytes } from '@noble/hashes/utils.js';
+import { base58 } from '@scure/base';
+import * as sr25519 from '@scure/sr25519';
+import { mnemonicToEntropy, validateMnemonic, wordlists } from 'bip39';
 import * as nacl from 'tweetnacl';
 import * as naclUtil from 'tweetnacl-util';
 
@@ -208,3 +215,68 @@ export async function getAddressFromSeed(seed: string): Promise<{ ss58_address: 
     throw new Error(`Failed to get address from seed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
+
+export async function mnemonicToSs58(mnemonic: string, ss58Prefix = 42, password = '') {
+  // Ensure WASM is initialized for util-crypto
+//   await cryptoWaitReady();
+
+  // 1) Substrate way: mnemonic -> mini-secret (32 bytes)
+  const miniSecret = customMnemonicToMiniSecret(mnemonic, password);
+//   console.log('miniSecret', miniSecret);
+
+  const secretKey = sr25519.secretFromSeed(miniSecret);
+//   console.log('secretKey', secretKey);
+
+  // 2) Derive sr25519 keypair from mini-secret
+  const publicKey = sr25519.getPublicKey(secretKey);
+//   console.log('publicKey', publicKey);
+  // (optional) hex form
+//   const pubHex = u8aToHex(publicKey);
+//   console.log('pubHex', pubHex);
+
+  // 3) SS58 encode the public key (choose chain prefix)
+//   const ss58 = encodeAddress(publicKey, ss58Prefix);
+  const ss58 = ss58Encode(publicKey, ss58Prefix);
+
+  return { ss58_address: ss58, public_key: publicKey };
+}
+
+function ss58Encode(publicKey: Uint8Array, prefix = 42) {
+    if (publicKey.length !== 32) {
+      throw new Error('Public key must be 32 bytes')
+    }
+  
+    const prefixBytes = new Uint8Array([prefix])
+    const payload = new Uint8Array(prefixBytes.length + publicKey.length)
+    payload.set(prefixBytes, 0)
+    payload.set(publicKey, prefixBytes.length)
+  
+    const pre = new TextEncoder().encode('SS58PRE')
+    const hash = blake2b(new Uint8Array([...pre, ...payload]), { dkLen: 64 })
+    const checksum = hash.slice(0, 2)
+  
+    const finalBytes = new Uint8Array(payload.length + 2)
+    finalBytes.set(payload, 0)
+    finalBytes.set(checksum, payload.length)
+  
+    return base58.encode(finalBytes)
+  }
+
+function customMnemonicToMiniSecret(mnemonic: string, password = '') {
+    if (!validateMnemonic(mnemonic, wordlists.english)) {
+      throw new Error('Invalid BIP39 mnemonic')
+    }
+  
+    // entropy from mnemonic
+    const entropy = mnemonicToEntropy(mnemonic, wordlists.english)
+    const entropyBytes = hexToBytes(entropy)
+  
+    // salt = "mnemonic" + password
+    const salt = new TextEncoder().encode('mnemonic' + password)
+  
+    // pbkdf2-HMAC-SHA512(entropy, salt, 2048) → 64 bytes
+    const seed64 = pbkdf2(sha512, entropyBytes, salt, { c: 2048, dkLen: 64 })
+  
+    // first 32 bytes only (mini-secret)
+    return seed64.slice(0, 32)
+  }

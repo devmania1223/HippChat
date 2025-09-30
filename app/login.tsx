@@ -1,4 +1,4 @@
-import { deriveKeysFromSeed, getAddressFromSeed, hippiusCredentialsFromKeyPair } from '@/lib/crypto';
+import { deriveKeysFromSeed, hippiusCredentialsFromKeyPair, mnemonicToSs58 } from '@/lib/crypto';
 import { ensureUserStorage, makeS3Client } from '@/lib/s3';
 import { useChatStore } from '@/lib/store';
 import { getTestUsers } from '@/lib/test-users';
@@ -83,7 +83,7 @@ export default function LoginScreen() {
     setIsValidatingSeed(true);
     try {
       // Get address from seed using API
-      const { ss58_address, public_key } = await getAddressFromSeed(seedPhrase.trim());
+      const { ss58_address, public_key } = await mnemonicToSs58(seedPhrase.trim());
 
       // Derive keypair using the API response
       const keyPair = deriveKeysFromSeed(seedPhrase.trim(), ss58_address);
