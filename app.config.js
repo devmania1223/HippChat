@@ -1,6 +1,7 @@
 export default {
   expo: {
     name: "HippChat",
+    scheme: "hippchat",
     slug: "hippchat",
     version: "1.0.0",
     orientation: "portrait",

@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 
 export default function LoginScreen() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingUser, setLoadingUser] = useState<string | null>(null);
   const [testUsers, setTestUsers] = useState<any[]>([]);
   const [loginMode, setLoginMode] = useState<'test' | 'seed'>('test');
   const [seedPhrase, setSeedPhrase] = useState('');
@@ -38,7 +38,7 @@ export default function LoginScreen() {
   }, []);
 
   const handleTestUserLogin = async (testUser: any) => {
-    setIsLoading(true);
+    setLoadingUser(testUser.ss58Address);
     try {
       const keyPair = await deriveKeysFromSeed(testUser.seed);
       const credentials = hippiusCredentialsFromKeyPair(keyPair);
@@ -73,7 +73,7 @@ export default function LoginScreen() {
       console.error('Test user login error:', error);
       setError('Failed to login with test user. Please try again.');
     } finally {
-      setIsLoading(false);
+      setLoadingUser(null);
     }
   };
 
@@ -125,6 +125,9 @@ export default function LoginScreen() {
     }
   };
 
+  // Word count validation
+  const words = seedPhrase.split(' ').filter(Boolean);
+  const validSeed = words.length === 12 || words.length === 24;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -189,10 +192,10 @@ export default function LoginScreen() {
                 key={user.ss58Address}
                 style={[
                   styles.testUserButton,
-                  isLoading && styles.testUserButtonDisabled
+                  loadingUser === user.ss58Address && styles.testUserButtonDisabled
                 ]}
                 onPress={() => handleTestUserLogin(user)}
-                disabled={isLoading}
+                disabled={loadingUser !== null}
               >
                 <View style={styles.userAvatar}>
                   <Text style={styles.userAvatarText}>
@@ -208,7 +211,7 @@ export default function LoginScreen() {
                     </Text>
                   )}
                 </View>
-                {isLoading && (
+                {loadingUser === user.ss58Address && (
                   <View style={styles.loadingIndicator}>
                     <ActivityIndicator color="#3167dd" size="small" />
                   </View>
@@ -227,7 +230,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.seedInput}
               value={seedPhrase}
-              onChangeText={setSeedPhrase}
+              onChangeText={(text) => setSeedPhrase(text.replace(/\s+/g, ' ').trim())}
               placeholder="Enter your seed phrase here..."
               placeholderTextColor="#9ca3af"
               multiline
@@ -235,16 +238,18 @@ export default function LoginScreen() {
               textAlignVertical="top"
               autoCapitalize="none"
               autoCorrect={false}
-              secureTextEntry={false}
             />
+            <Text style={{ textAlign: 'right', color: '#6b7280', fontSize: 12 }}>
+              {words.length} words
+            </Text>
           </View>
           <TouchableOpacity
             style={[
               styles.seedLoginButton,
-              (!seedPhrase.trim() || isValidatingSeed) && styles.seedLoginButtonDisabled
+              (!validSeed || isValidatingSeed) && styles.seedLoginButtonDisabled
             ]}
             onPress={handleSeedLogin}
-            disabled={!seedPhrase.trim() || isValidatingSeed}
+            disabled={!validSeed || isValidatingSeed}
           >
             {isValidatingSeed ? (
               <ActivityIndicator color="#ffffff" size="small" />
@@ -457,7 +462,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   seedInputContainer: {
-    marginBottom: 20,
+    marginBottom: 8,
   },
   seedInput: {
     backgroundColor: '#f8fafc',
@@ -482,6 +487,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
+    marginTop: 12,
   },
   seedLoginButtonDisabled: {
     backgroundColor: '#9ca3af',

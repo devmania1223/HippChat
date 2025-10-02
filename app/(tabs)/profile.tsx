@@ -4,15 +4,15 @@ import { useChatStore } from '@/lib/store';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    Easing,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Animated,
+  Easing,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 export default function ProfileScreen() {
@@ -219,14 +219,14 @@ export default function ProfileScreen() {
           )}
         </View>
       </View>
-      
+
       <MessageBox
         visible={showLogoutModal}
         title="Logout"
         message="Are you sure you want to logout?"
-        confirmText="Logout"
+        confirmText="Yes, Logout"
         cancelText="Cancel"
-        confirmButtonColor="#FF3B30"
+        confirmButtonColor="#3167dd"
         onConfirm={confirmLogout}
         onCancel={cancelLogout}
       />
@@ -327,19 +327,20 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#ef4444',
-    borderRadius: 8,
-    shadowColor: '#ef4444',
+    paddingVertical: 9,
+    backgroundColor: '#3167dd',
+    borderRadius: 10,
+    shadowColor: '#3167dd',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   logoutText: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   profileContainer: {
     backgroundColor: '#ffffff',

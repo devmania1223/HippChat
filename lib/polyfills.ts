@@ -1,11 +1,21 @@
-// Import polyfills in the correct order
+// Import core polyfills
 import 'react-native-get-random-values';
 import 'react-native-url-polyfill/auto';
 
-// Set up Buffer polyfill
+// Buffer polyfill
 import { Buffer } from 'buffer';
-global.Buffer = Buffer;
+if (typeof global.Buffer === 'undefined') {
+    global.Buffer = Buffer;
+}
 
-// Set up process polyfill
+// Process polyfill
 import process from 'process';
-global.process = process;
+if (typeof global.process === 'undefined') {
+    global.process = process;
+}
+
+// Crypto polyfill (important for bip39 / @noble/hashes)
+import { getRandomValues as expoGetRandomValues } from 'expo-crypto';
+if (typeof global.crypto === 'undefined') {
+    global.crypto = { getRandomValues: expoGetRandomValues } as Crypto;
+}

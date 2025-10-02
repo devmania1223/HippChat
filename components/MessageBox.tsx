@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#8da8ddff',
   },
   confirmButtonText: {
     fontSize: 16,

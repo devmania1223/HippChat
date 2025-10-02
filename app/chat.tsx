@@ -9,6 +9,8 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -18,16 +20,16 @@ import {
 
 export default function ChatScreen() {
   const router = useRouter();
-  const { 
-    selectedContact, 
-    contacts, 
-    messages, 
-    addMessage, 
+  const {
+    selectedContact,
+    contacts,
+    messages,
+    addMessage,
     addMessages,
     updateLastReadOffset,
-    currentUser 
+    currentUser
   } = useChatStore();
-  
+
   const [messageText, setMessageText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -60,28 +62,20 @@ export default function ChatScreen() {
       if (cancelled || !selectedContact || !messaging) return;
       try {
         const newMessages = await messaging.pollMessages(selectedContact, pollOffsetRef.current);
-        // pollMessages currently returns Message[]; offset is advanced inside store on next lines
         if (newMessages && newMessages.length > 0) {
-          // de-dup against store before appending, in case poll returns overlapping lines
           const existing = useChatStore.getState().messages[selectedContact] || [];
           const existingIds = new Set(existing.map(m => m.msg_id));
           const deduped = newMessages.filter(m => !existingIds.has(m.msg_id));
           if (deduped.length > 0) {
             addMessages(selectedContact, deduped);
-            // Trigger burst mode to reduce latency for subsequent polls
             burstRemainingRef.current = Math.max(burstRemainingRef.current, 3);
           }
         }
-        // Update offset to latest known from store if messaging.pollMessages advanced it,
-        // else keep the previous value. In current implementation, pollInboxTail returns
-        // newOffset internally, but we don't get it here; so fetch from store.
         const latestOffset = (useChatStore.getState().lastReadOffsets[selectedContact] ?? pollOffsetRef.current);
         pollOffsetRef.current = latestOffset;
-        // reset backoff on success
         pollDelayRef.current = 3000;
       } catch (error) {
         console.error('Failed to poll messages:', error);
-        // keep retry cadence predictable despite transient errors (5-6s jitter)
         pollDelayRef.current = Math.floor(5000 + Math.random() * 1000);
       } finally {
         const delay = burstRemainingRef.current > 0 ? 1000 : pollDelayRef.current;
@@ -105,21 +99,18 @@ export default function ChatScreen() {
         try {
           const lookbackMs = 10 * 60 * 1000;
           const hasIncoming = await messaging.hasRecentIncoming(selectedContact, lookbackMs);
-          // console.log('[chat-init] hasRecentIncoming within 10m:', hasIncoming, 'contact:', selectedContact);
           if (hasIncoming) {
             const now = Date.now();
             const threshold = now - lookbackMs;
             const existing = useChatStore.getState().messages[selectedContact] || [];
             const presentInStore = existing.some(m => m.from === selectedContact && new Date(m.ts).getTime() >= threshold);
             if (!presentInStore) {
-              // console.log('[chat-init] recent incoming detected but not in store; backfilling');
               try {
                 await messaging.loadInitialHistory(selectedContact, 150);
               } catch (bfErr) {
                 console.error('[chat-init] backfill after hasRecentIncoming failed:', bfErr);
               }
             }
-            // Enter burst mode to catch new lines within 1-3s
             burstRemainingRef.current = Math.max(burstRemainingRef.current, 3);
           }
         } catch (e) {
@@ -133,7 +124,6 @@ export default function ChatScreen() {
       }
     };
 
-    // start after optional backfill
     initAndStart();
 
     return () => {
@@ -159,14 +149,11 @@ export default function ChatScreen() {
         type: 'text'
       });
 
-      // Add message to local state
       addMessage(selectedContact, message);
-      
-      // advance the poll offset optimistically by leveraging store's update on next poll
     } catch (error) {
       console.error('Failed to send message:', error);
       console.log('Error', 'Failed to send message. Please try again.');
-      setMessageText(messageContent); // Restore message text
+      setMessageText(messageContent);
     } finally {
       setIsSending(false);
     }
@@ -183,9 +170,9 @@ export default function ChatScreen() {
             {content}
           </Text>
           <Text style={[styles.messageTime, isOwn ? styles.ownMessageTime : styles.otherMessageTime]}>
-            {new Date(item.ts).toLocaleTimeString([], { 
-              hour: '2-digit', 
-              minute: '2-digit' 
+            {new Date(item.ts).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
             })}
           </Text>
         </View>
@@ -195,89 +182,129 @@ export default function ChatScreen() {
 
   if (!contact) {
     return (
-      <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.errorContainer}>
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
         <Text style={styles.errorText}>Contact not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.errorButton}>
+          <Text style={styles.errorButtonText}>Go Back</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.contactInfo}>
-          {contact.avatarUrl ? (
-            <Image source={{ uri: contact.avatarUrl }} style={styles.headerAvatar} />
-          ) : (
-            <View style={styles.headerAvatarPlaceholder}>
-              <Text style={styles.headerAvatarText}>
-                {contact.displayName.charAt(0).toUpperCase()}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#075e54" />
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        {/* WhatsApp-style Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.contactInfo} activeOpacity={0.7}>
+            {contact.avatarUrl ? (
+              <Image source={{ uri: contact.avatarUrl }} style={styles.headerAvatar} />
+            ) : (
+              <View style={styles.headerAvatarPlaceholder}>
+                <Text style={styles.headerAvatarText}>
+                  {contact.displayName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={styles.contactDetails}>
+              <Text style={styles.contactName} numberOfLines={1}>
+                {contact.displayName}
               </Text>
+              <Text style={styles.contactStatus}>online</Text>
             </View>
-          )}
-          <View style={styles.contactDetails}>
-            <Text style={styles.contactName}>{contact.displayName}</Text>
-            <View style={styles.statusContainer}>
-              <View style={styles.statusIndicator} />
-              <Text style={styles.contactStatus}>Online</Text>
-            </View>
+          </TouchableOpacity>
+
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.headerIconButton}>
+              <Text style={styles.headerIcon}>📹</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerIconButton}>
+              <Text style={styles.headerIcon}>📞</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerIconButton}>
+              <Text style={styles.headerIcon}>⋮</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>⋯</Text>
-          </TouchableOpacity>
+
+        {/* Messages List */}
+        <View style={styles.messagesWrapper}>
+          <FlatList
+            ref={flatListRef}
+            data={chatMessages}
+            keyExtractor={(item) => item.msg_id}
+            renderItem={renderMessage}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContainer}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            showsVerticalScrollIndicator={false}
+          />
         </View>
-      </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={chatMessages}
-        keyExtractor={(item) => item.msg_id}
-        renderItem={renderMessage}
-        style={styles.messagesList}
-        contentContainerStyle={styles.messagesContainer}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
+        {/* Input Area - Fixed at bottom */}
+        <View style={styles.inputWrapper}>
+          <View style={styles.inputContainer}>
+            <TouchableOpacity style={styles.iconButton}>
+              <Text style={styles.iconButtonText}>😊</Text>
+            </TouchableOpacity>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          value={messageText}
-          onChangeText={setMessageText}
-          placeholder="Type a message..."
-          multiline
-          maxLength={1000}
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, (!messageText.trim() || isSending) && styles.sendButtonDisabled]}
-          onPress={handleSendMessage}
-          disabled={!messageText.trim() || isSending}
-        >
-          {isSending ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.sendButtonText}>Send</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+            <TextInput
+              style={styles.textInput}
+              value={messageText}
+              onChangeText={setMessageText}
+              placeholder="Message"
+              placeholderTextColor="#8696a0"
+              multiline
+              maxLength={1000}
+            />
+
+            <TouchableOpacity style={styles.iconButton}>
+              <Text style={styles.iconButtonText}>📎</Text>
+            </TouchableOpacity>
+
+            {messageText.trim() ? (
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={handleSendMessage}
+                disabled={isSending}
+              >
+                {isSending ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.sendIcon}>➤</Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.iconButton}>
+                <Text style={styles.iconButtonText}>🎤</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#075e54',
+  },
+  keyboardView: {
+    flex: 1,
+    backgroundColor: '#efeae2',
   },
   errorContainer: {
     flex: 1,
@@ -287,113 +314,108 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   errorText: {
-    fontSize: 18,
-    color: '#6b7280',
+    fontSize: 16,
+    color: '#667781',
     marginBottom: 20,
     textAlign: 'center',
+  },
+  errorButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#075e54',
+    borderRadius: 24,
+  },
+  errorButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    backgroundColor: '#075e54',
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f8fafc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+    padding: 8,
+    marginRight: 4,
   },
   backButtonText: {
-    fontSize: 20,
-    color: '#3167dd',
-    fontWeight: '600',
+    fontSize: 24,
+    color: '#ffffff',
+    fontWeight: '400',
   },
   contactInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    paddingRight: 8,
   },
   headerAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     marginRight: 12,
   },
   headerAvatarPlaceholder: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#3167dd',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#d9d9d9',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   headerAvatarText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
   },
   contactDetails: {
     flex: 1,
+    justifyContent: 'center',
   },
   contactName: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 2,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10b981',
-    marginRight: 6,
+    color: '#ffffff',
+    marginBottom: 1,
   },
   contactStatus: {
     fontSize: 13,
-    color: '#6b7280',
+    color: '#d1d7db',
   },
   headerActions: {
-    marginLeft: 12,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f8fafc',
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  actionButtonText: {
-    fontSize: 18,
-    color: '#6b7280',
-    fontWeight: '600',
+  headerIconButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  headerIcon: {
+    fontSize: 20,
+    color: '#ffffff',
+  },
+  messagesWrapper: {
+    flex: 1,
   },
   messagesList: {
     flex: 1,
   },
   messagesContainer: {
-    padding: 20,
+    padding: 8,
+    paddingBottom: 16,
   },
   messageContainer: {
-    marginBottom: 16,
+    marginBottom: 4,
+    paddingHorizontal: 4,
   },
   ownMessage: {
     alignItems: 'flex-end',
@@ -402,90 +424,94 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '85%',
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    borderRadius: 24,
+    maxWidth: '80%',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
   },
   ownBubble: {
-    backgroundColor: '#3167dd',
-    borderBottomRightRadius: 6,
+    backgroundColor: '#dcf8c6',
+    borderTopRightRadius: 2,
   },
   otherBubble: {
     backgroundColor: '#ffffff',
-    borderBottomLeftRadius: 6,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    borderTopLeftRadius: 2,
   },
   messageText: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 20,
   },
   ownMessageText: {
-    color: '#ffffff',
+    color: '#303030',
   },
   otherMessageText: {
-    color: '#1a1a1a',
+    color: '#303030',
   },
   messageTime: {
-    fontSize: 12,
-    marginTop: 6,
+    fontSize: 11,
+    marginTop: 4,
+    alignSelf: 'flex-end',
   },
   ownMessageTime: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    textAlign: 'right',
+    color: '#667781',
   },
   otherMessageTime: {
-    color: '#9ca3af',
+    color: '#667781',
+  },
+  inputWrapper: {
+    backgroundColor: '#f0f2f5',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#e1e1e1',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
     backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderRadius: 24,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  iconButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconButtonText: {
+    fontSize: 22,
   },
   textInput: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 24,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    marginRight: 12,
-    maxHeight: 120,
+    maxHeight: 100,
     fontSize: 16,
-    backgroundColor: '#f8fafc',
-    color: '#1a1a1a',
+    lineHeight: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    color: '#303030',
   },
   sendButton: {
-    backgroundColor: '#3167dd',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 24,
-    minWidth: 70,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#00a884',
+    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#3167dd',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    marginLeft: 4,
   },
-  sendButtonDisabled: {
-    backgroundColor: '#9ca3af',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  sendButtonText: {
+  sendIcon: {
+    fontSize: 20,
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
 });

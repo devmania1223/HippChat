@@ -17,7 +17,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   // console.log('=== ROOT LAYOUT RENDERING ===');
-  
+
   const colorScheme = useColorScheme();
   const { isAuthenticated, hasHydrated } = useChatStore();
   const [loaded] = useFonts({});
